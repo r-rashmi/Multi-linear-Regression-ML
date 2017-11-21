@@ -1,0 +1,133 @@
+---
+title: "Housing Data Prediction"
+author: "Rashmi Ravichandran"
+date: "October 22, 2017"
+output: html_document
+---
+
+#Question 1 and 2
+
+##Importing, Reading and Viewing Train and Test Data
+```{r}
+library(readr)
+train <- read_csv("C:/Users/Rashmi Ravichandran/Desktop/HW2 - 737/house_train.csv")
+View(train)
+library(readr)
+test <- read_csv("C:/Users/Rashmi Ravichandran/Desktop/HW2 - 737/house_test.csv")
+View(test)
+```
+
+##Creating Regression Model for Home Prices in 2013 By State
+```{r}
+lmtrain.price <- lm(price2013 ~ state, data = train)
+df.lmtrain.price <- summary(lmtrain.price)$coefficients
+View(df.lmtrain.price)
+```
+
+A) The Intercept value is $2,81,730 and it corresponds to Alaska(AK).It is the average benchamrk House Price for 2013 on the basis of which all other states are compared in terms of average and variance.
+
+B) We get this information by developing a Linear Model of the house_train data. The top row shows the Intercept value under Estimate. On finding the average of the prices of homes in 2013 by state using the aggregate function, we find that the intercept value corresponds to AK or Alaska.
+
+C) From the lmtrain.price Regression Coefficient for Estimate, WV has the least and DC has the most expensive home.
+
+D) By arranging the data in the lmtrain.price table from lowest to greatest, we observe the state of WV has the lowest house rates. Similarly, on arranging from highest to lowest, we find that DC has the greatest house rates. This observation can be verified by the mean_state table's mean house prices by state coloumn.
+
+E) Average Prices of Homes in DC and WV is 514,288.9 and 98,423.08 respectively.
+
+F) The average price of homes in DC is 514,288.9.We get this value by adding the value of stateDC edtimate to the intercept value. The average price of homes in WV is 98,423.08.Similarly, we get this value by adding the estimate value of WV to the intercept value.
+
+##Predicting House Prices for 2013 in Test Data
+```{r}
+test$price2013 <- predict.lm(lmtrain.price, newdata=test)
+```
+
+#Question 3
+
+##Combining State and County Information
+```{r}
+library(tidyverse)
+statecountytrain <- train %>% unite(statecounty, state, county, remove=FALSE, sep="-")
+View(statecountytrain)
+```
+
+##Linear Model by State and County
+```{r}
+lmtrain.statecounty <- lm(formula = price2013 ~ statecounty, data = statecountytrain)
+df.lmtrain.pricestatecounty <- summary(lmtrain.statecounty)$coefficients
+View(df.lmtrain.pricestatecounty)
+```
+
+A) CA-San Mateo and NC-Edge Combe have the highest and lowest linear coefficients. This is because with respect to the intercept value, the values of CA-San Mateo is positive and the value of NC-Edge Combe is negative. When sorting the estimate from lowest to highest and highest to lowest values, we see that NC-Edge Combe has an estimate with a value farthest negatively from the incerpect while CA-San Mateo has a value farthest positively from the intercept.
+
+##Importing Test Data(Again as Test2)
+```{r}
+library(readr)
+test2 <- read_csv("C:/Users/Rashmi Ravichandran/Desktop/HW2 - 737/house_test.csv")
+View(test2)
+```
+
+##Combining State and County Information in Test
+```{r}
+statecountytest <- test2 %>% unite(statecounty, state, county, remove=FALSE, sep="-")
+View(statecountytest)
+```
+
+##Cleaning StateCountyTest to match StateCountyTrain
+```{r}
+statecountytest_filtered<- statecountytest %>%
+     filter(!statecounty %in% c("CO-gilpin", "FL-washington", "GA-union", "LA-bossier", "NH-grafton", "TX-hill", "TX-hunt", "TX-orange", "VA-carroll", "VA-harrisonburg city", "WA-douglas"))
+View(statecountytest_filtered)
+```
+
+##Predicting Home Prices in 2013 by State and County
+```{r}
+lmtrain.statecounty <- lm(formula = price2013 ~ statecounty, data = statecountytrain)
+statecountytest_filtered$price2013 <- predict.lm(lmtrain.statecounty, newdata=statecountytest_filtered)
+View(statecountytest_filtered)
+```
+
+#Question 4
+
+##Combining Statecounty and Poverty Index in Train
+```{r}
+statecountypovertytrain <- statecountytrain %>% unite(statecountypoverty, statecounty, poverty, remove=FALSE, sep="-")
+View(statecountypovertytrain)
+```
+
+##Linear Model by State, County and Poverty
+```{r}
+lmtrain.statecountypoverty <- lm(formula = price2013 ~ statecountypoverty, data = statecountypovertytrain)
+df.lmtrain.pricestatecountypoverty <- summary(lmtrain.statecountypoverty)$coefficients
+View(df.lmtrain.pricestatecountypoverty)
+```
+
+##Combining State County and Poverty in Test
+```{r}
+statecountypovertytest <- statecountytest %>% unite(statecountypoverty, statecounty, poverty, remove=FALSE, sep="-")
+View(statecountypovertytest)
+```
+
+##Cleaning StateCountyPovertyTest to Match StateCountyPOverty Train
+```{r}
+statecountypovertytest_filtered <- statecountypovertytest %>% filter(!statecountypoverty %in% c("CO-gilpin-6.2", "FL-washington-18.9", "GA-union-11.6", "LA-bossier-15", "NH-grafton-7.7", "TX-hill-16.9", "TX-hunt-16.4", "TX-orange-13.5", "VA-carroll-13.9", "VA-harrisonburg city-26.7", "WA-douglas-12.8"))
+View(statecountytest_filtered)
+```
+
+##Predicting Home Values in 2013 by State, County and Poverty
+```{r}
+lm.train.statecounty.poverty <- lm(formula = price2013 ~ statecountypoverty, data = statecountypovertytrain)
+statecountypovertytest_filtered$price2013 <- predict.lm(lmtrain.statecountypoverty, newdata = statecountypovertytest_filtered)
+View(statecountypovertytest_filtered)
+```
+
+##Linear Model of Test Data
+```{r}
+lmtest.statecountypoverty_filtered <- lm(formula = price2013 ~ statecountypoverty, data= statecountypovertytest_filtered)
+```
+
+##Calculating RMSE
+```{r}
+rmse <- sqrt( mean( (statecountypovertytest_filtered$price2013-statecountypovertytrain$price2013)^2 , na.rm = TRUE ) ) /1000000
+rmse
+```
+
